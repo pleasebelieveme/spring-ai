@@ -36,5 +36,5 @@ out/
 ### VS Code ###
 .vscode/
 
-### ket ###
+### key ###
 gemini-service-account.json
