@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 실시간 응답</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            width: 600px;
+            margin: 50px auto;
+        }
+        #chatBox {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            min-height: 150px;
+            white-space: pre-line; /* 줄바꿈 유지 */
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .typing-cursor {
+            display: inline-block;
+            width: 6px;
+            background: black;
+            animation: blink 0.8s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        #questionInput {
+            font-size: 16px;
+            padding: 5px;
+        }
+        button {
+            padding: 6px 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>AI 응답 스트리밍</h2>
+
+<input type="text" id="questionInput" placeholder="질문을 입력하세요" style="width:300px;">
+<button onclick="sendQuestion()">전송</button>
+
+<div id="chatBox">
+</div>
+
+<script>
+    const socket = new WebSocket("ws://localhost:8080/ws/ai");
+    const chatBox = document.getElementById("chatBox");
+
+    // 커서 표시
+    let cursor = document.createElement("span");
+    cursor.classList.add("typing-cursor");
+    chatBox.appendChild(cursor);
+
+    // WebSocket 메시지 들어올 때
+    socket.onmessage = function(event) {
+        // 커서 앞에 텍스트 삽입
+        cursor.insertAdjacentText("beforebegin", event.data);
+    };
+
+    socket.onopen = () => console.log("✅ WebSocket 연결됨");
+    socket.onerror = e => console.error("❌ WebSocket 에러:", e);
+    socket.onclose = () => console.log("⛔ WebSocket 닫힘");
+
+    // 질문 전송
+    function sendQuestion() {
+        const input = document.getElementById("questionInput");
+        const question = input.value.trim();
+        if (!question) return;
+
+        // 새 대화 시작 시 기존 텍스트 초기화
+        chatBox.innerHTML = "";
+        chatBox.appendChild(cursor);
+
+        fetch("/api/ask", {
+            method: "POST",
+            headers: {"Content-Type": "text/plain"},
+            body: question
+        });
+
+        input.value = "";
+    }
+</script>
+
+</body>
+</html>
